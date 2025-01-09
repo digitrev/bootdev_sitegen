@@ -1,9 +1,13 @@
+"""Test the TextNode class"""
+
 import unittest
 
 from textnode import TextNode, TextType
 
 
 class TestTextNode(unittest.TestCase):
+    """TestTextNode - tests the TextNode functionality"""
+
     def test_eq(self):
         node = TextNode("This is a text node", TextType.BOLD)
         node2 = TextNode("This is a text node", TextType.BOLD)
