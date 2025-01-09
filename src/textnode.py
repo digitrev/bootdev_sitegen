@@ -2,7 +2,7 @@
 
 from enum import Enum
 
-from leafnode import LeafNode
+from htmlnode import LeafNode
 
 class TextType(Enum):
     """Text type enumeration: normal, bold, etc..."""

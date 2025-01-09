@@ -20,3 +20,30 @@ class HTMLNode():
 
     def __repr__(self):
         return f"HTMLNode({self.tag}, {self.value}, {self.children}, {self.props})"
+
+class LeafNode(HTMLNode):
+    """Leaf nodes, cannot contain children, must contain value"""
+    def __init__(self, tag, value, props=None):
+        super().__init__(tag, value, None, props)
+
+    def to_html(self):
+        if not self.value:
+            raise ValueError("Missing value")
+
+        if self.tag is not None:
+            return f"<{self.tag}{self.props_to_html()}>{self.value}</{self.tag}>"
+        return self.value
+
+class ParentNode(HTMLNode):
+    """Leaf nodes, cannot contain value, must contain children"""
+    def __init__(self, tag, children, props=None):
+        super().__init__(tag, None, children, props)
+
+    def to_html(self):
+        if not self.tag:
+            raise ValueError("Missing tag")
+        if not self.children:
+            raise ValueError("Missing children")
+        return "".join([f"<{self.tag}{self.props_to_html()}>"]
+                       + [c.to_html() for c in self.children]
+                       + [f"</{self.tag}>"])

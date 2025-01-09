@@ -1,12 +1,13 @@
 """Main file, currently used for testing"""
 
-from parentnode import ParentNode
-from leafnode import LeafNode
+from htmlnode import LeafNode, ParentNode
+
 
 def main():
     """Main function"""
     child = LeafNode("b", "bold")
-    parent = ParentNode("p", [child])
+    child2 = LeafNode("i", "hi bye")
+    parent = ParentNode("p", [child, child2])
     print(parent.to_html())
 
 main()
