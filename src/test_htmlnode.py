@@ -88,6 +88,26 @@ class TestHTMLNode(unittest.TestCase):
             parent.to_html()
         self.assertEqual(str(ve.exception), "Missing children")
 
+    def test_parent_multiple_children(self):
+        """Test parent node with multiple children"""
+        child1 = LeafNode(None, "test")
+        child2 = LeafNode("b", "bold")
+        parent = ParentNode("p", [child1, child2])
+        self.assertEqual(parent.tag, "p")
+        self.assertEqual(len(parent.children), 2)
+        self.assertEqual(parent.to_html(),
+                         "<p>test<b>bold</b></p>")
+        
+
+    def test_parent_nested(self):
+        """Test parent node with nested parent node"""
+        leaf = LeafNode("b", "leaf")
+        middle = ParentNode("p", [leaf])
+        top = ParentNode("h1", [middle])
+        self.assertEqual(top.tag, "h1")
+        self.assertEqual(top.to_html(),
+                         "<h1><p><b>leaf</b></p></h1>")
+
 
 if __name__ == "__main__":
     unittest.main()
