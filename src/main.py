@@ -1,11 +1,12 @@
-from textnode import TextNode, TextType
-from htmlnode import HTMLNode
+"""Main file, currently used for testing"""
+
+from parentnode import ParentNode
 from leafnode import LeafNode
 
 def main():
-    n1 = LeafNode("p", "This is a paragraph of text.")
-    n2 = LeafNode("a", "Click me!", {"href": "https://www.google.com"})
-    print(n1.to_html())
-    print(n2.to_html())
+    """Main function"""
+    child = LeafNode("b", "bold")
+    parent = ParentNode("p", [child])
+    print(parent.to_html())
 
 main()

@@ -1,8 +1,11 @@
+"""testing HTML Node"""
+
 import unittest
 
 from htmlnode import HTMLNode
 
 class TestHTMLNode(unittest.TestCase):
+    """Test HTML Node"""
     def test_gen_tag(self):
         node = HTMLNode(tag="t1")
         self.assertEqual(node.tag, "t1")
