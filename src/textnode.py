@@ -11,7 +11,7 @@ class TextType(Enum):
     ITALIC = "italic"
     CODE = "code"
     LINK = "link"
-    IMAGES = "images"
+    IMAGE = "image"
 
 class TextNode():
     """Text node, defined by text, a type, and an optional url"""
@@ -45,7 +45,7 @@ class TextNode():
             case TextType.LINK:
                 tag = "a"
                 props = {"href": self.url}
-            case TextType.IMAGES:
+            case TextType.IMAGE:
                 tag = "img"
                 value = ""
                 props = {"src": self.url, "alt": self.text}
