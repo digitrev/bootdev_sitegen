@@ -1,6 +1,7 @@
 """Basic text node"""
 
 from enum import Enum
+import re
 
 from htmlnode import LeafNode
 
@@ -68,3 +69,11 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
                 new_nodes.append(TextNode(text, new_type, node.url))
                 new_type = text_type if new_type == TextType.NORMAL else TextType.NORMAL
     return new_nodes
+
+def extract_markdown_images(text):
+    """Extract url and alt text or markdown images"""
+    return re.findall(r"!\[([^\]]+)\]\(([^\)]+)\)", text)
+
+def extract_markdown_links(text):
+    """Extract url and alt text or markdown images"""
+    return re.findall(r"\[([^\]]+)\]\(([^\)]+)\)", text)

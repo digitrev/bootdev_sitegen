@@ -1,7 +1,7 @@
 """Test the TextNode class"""
 
 import unittest
-from textnode import TextNode, TextType, split_nodes_delimiter
+from textnode import TextNode, TextType, extract_markdown_images, extract_markdown_links, split_nodes_delimiter
 
 class TestTextNode(unittest.TestCase):
     """TestTextNode - tests the TextNode functionality"""
@@ -123,6 +123,40 @@ class TestTextFunctions(unittest.TestCase):
         with self.assertRaises(ValueError) as ve:
             split_nodes_delimiter([node], "*", TextType.BOLD)
         self.assertEqual(str(ve.exception), "Missing delimiter")
+
+    def test_extract_markdown_images_single(self):
+        """Test extract_markdown_images, single image"""
+        self.assertEqual(
+            extract_markdown_images("Text ![alt](example.com/test.gif)"),
+            [("alt", "example.com/test.gif")])
+
+    def test_extract_markdown_images_double(self):
+        """Test extract_markdown_images, two images"""
+        self.assertEqual(
+            extract_markdown_images(
+                "Text ![alt](example.com/test.gif) more ![alt2](t.co/other.png)"),
+                [("alt", "example.com/test.gif"), ("alt2", "t.co/other.png")])
+
+    def test_extract_markdown_images_no_image(self):
+        """Test extract_markdown_images, no images"""
+        self.assertEqual(extract_markdown_images("Text"),[])
+
+    def test_extract_markdown_links_single(self):
+        """Test extract_markdown_links, single link"""
+        self.assertEqual(
+            extract_markdown_links("Text [link](example.com)"),
+            [("link", "example.com")])
+
+    def test_extract_markdown_links_double(self):
+        """Test extract_markdown_links, two links"""
+        self.assertEqual(
+            extract_markdown_links(
+                "Text ![link](example.com) more ![link2](google.ca)"),
+                [("link", "example.com"), ("link2", "google.ca")])
+
+    def test_extract_markdown_links_no_image(self):
+        """Test extract_markdown_links, no links"""
+        self.assertEqual(extract_markdown_links("Text"),[])
 
 if __name__ == "__main__":
     unittest.main()
