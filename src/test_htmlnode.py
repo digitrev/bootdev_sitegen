@@ -60,7 +60,7 @@ class TestHTMLNode(unittest.TestCase):
         self.assertEqual(parent.tag, "p")
         self.assertEqual(parent.children, [child])
         self.assertEqual(parent.props, None)
-        self.assertEqual(parent.to_html(), 
+        self.assertEqual(parent.to_html(),
                          "<p><b>test</b></p>")
 
     def test_parent_with_tag_and_props(self):
@@ -72,7 +72,7 @@ class TestHTMLNode(unittest.TestCase):
         self.assertEqual(parent.props, {"href": "google.ca"})
         self.assertEqual(parent.to_html(),
                          '<a href="google.ca"><b>test</b></a>')
-    
+
     def test_parent_no_tag(self):
         """Test parent node without a tag"""
         child = LeafNode("b", "test")
@@ -97,7 +97,6 @@ class TestHTMLNode(unittest.TestCase):
         self.assertEqual(len(parent.children), 2)
         self.assertEqual(parent.to_html(),
                          "<p>test<b>bold</b></p>")
-        
 
     def test_parent_nested(self):
         """Test parent node with nested parent node"""

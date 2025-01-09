@@ -1,7 +1,7 @@
 """Test the TextNode class"""
 
 import unittest
-from textnode import TextNode, TextType
+from textnode import TextNode, TextType, split_nodes_delimiter
 
 class TestTextNode(unittest.TestCase):
     """TestTextNode - tests the TextNode functionality"""
@@ -78,6 +78,51 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(repr(node.text_node_to_html_node()),
                          "HTMLNode(img, , None, {'src': 'google.ca/test.png', 'alt': 'Text node'})")
 
+class TestTextFunctions(unittest.TestCase):
+    """Tests text node related functions"""
+    def test_split_nodes_single(self):
+        """Test split_nodes_delimiter with one input text"""
+        node = TextNode("Simple *bold* text", TextType.NORMAL)
+        new_nodes = split_nodes_delimiter([node], "*", TextType.BOLD)
+        output = "[TextNode(Simple , normal, None),"
+        output += " TextNode(bold, bold, None), TextNode( text, normal, None)]"
+        self.assertEqual(repr(new_nodes),
+                         output)
+
+    def test_split_nodes_two_delimiters(self):
+        """Test split_nodes_delimiter with one input text, two delimiters"""
+        node = TextNode("Simple *bold* text with followup *bold*", TextType.NORMAL)
+        new_nodes = split_nodes_delimiter([node], "*", TextType.BOLD)
+        output = "[TextNode(Simple , normal, None), TextNode(bold, bold, None),"
+        output += " TextNode( text with followup , normal, None)"
+        output += ", TextNode(bold, bold, None), TextNode(, normal, None)]"
+        self.assertEqual(repr(new_nodes),
+                         output)
+
+    def test_split_nodes_two_nodes(self):
+        """Test split_nodes_delimiter with one input text, two delimiters"""
+        node = TextNode("Simple *bold* text with followup *bold*", TextType.NORMAL)
+        node2 = TextNode("Testing *bold* text", TextType.NORMAL)
+        new_nodes = split_nodes_delimiter([node, node2], "*", TextType.BOLD)
+        output = "[TextNode(Simple , normal, None), TextNode(bold, bold, None),"
+        output += " TextNode( text with followup , normal, None), TextNode(bold, bold, None)"
+        output += ", TextNode(, normal, None), TextNode(Testing , normal, None), "
+        output += "TextNode(bold, bold, None), TextNode( text, normal, None)]"
+        self.assertEqual(repr(new_nodes),
+                         output)
+
+    def test_split_nodes_non_normal(self):
+        """Test split_nodes_delimiter when the text is not NORMAL"""
+        node = TextNode("Already bold", TextType.BOLD)
+        new_nodes = split_nodes_delimiter([node], "*", TextType.BOLD)
+        self.assertEqual(repr(new_nodes), "[TextNode(Already bold, bold, None)]")
+
+    def test_split_nodes_unpaired_delimiter(self):
+        """Test split_nodes_delimiter when there's an unclosed delimiter"""
+        node = TextNode("Only one *in this", TextType.NORMAL)
+        with self.assertRaises(ValueError) as ve:
+            split_nodes_delimiter([node], "*", TextType.BOLD)
+        self.assertEqual(str(ve.exception), "Missing delimiter")
 
 if __name__ == "__main__":
     unittest.main()
