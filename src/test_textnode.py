@@ -1,7 +1,18 @@
 """Test the TextNode class"""
 
 import unittest
-from textnode import TextNode, TextType, extract_markdown_images, extract_markdown_links, split_nodes_delimiter
+from htmlnode import HTMLNode
+from textnode import (
+    TextNode,
+    TextType,
+    extract_markdown_images,
+    split_nodes_image,
+    split_nodes_link,
+    extract_markdown_links,
+    split_nodes_delimiter,
+    swap_types,
+)
+
 
 class TestTextNode(unittest.TestCase):
     """TestTextNode - tests the TextNode functionality"""
@@ -20,7 +31,9 @@ class TestTextNode(unittest.TestCase):
 
     def test_not_eq_different_text(self):
         """Test non-equality where text differs"""
-        node = TextNode("This is a text node with different data", TextType.ITALIC, "a url")
+        node = TextNode(
+            "This is a text node with different data", TextType.ITALIC, "a url"
+        )
         node2 = TextNode("This is a text node", TextType.ITALIC, "a url")
         self.assertNotEqual(node, node2)
 
@@ -45,71 +58,109 @@ class TestTextNode(unittest.TestCase):
     def test_repr_with_url(self):
         """Test self representation"""
         node = TextNode("Text node", TextType.BOLD, "https://google.ca")
-        self.assertEqual(repr(node),
-                         "TextNode(Text node, bold, https://google.ca)")
+        self.assertEqual(repr(node), "TextNode(Text node, bold, https://google.ca)")
 
     def test_repr_no_url(self):
         """Test self representation without url"""
         node = TextNode("Text node", TextType.BOLD)
-        self.assertEqual(repr(node),
-                         "TextNode(Text node, bold, None)")
+        self.assertEqual(repr(node), "TextNode(Text node, bold, None)")
 
     def test_html_conversion_normal(self):
         """Test text_node_to_html_node(), no decoration"""
         node = TextNode("Text node", TextType.NORMAL)
-        self.assertEqual(repr(node.text_node_to_html_node()),
-                         "HTMLNode(None, Text node, None, None)")
+        self.assertEqual(
+            node.text_node_to_html_node(), HTMLNode(None, "Text node", None, None)
+        )
 
     def test_html_conversion_tagged(self):
         """Test text_node_to_html_node(), basic tag"""
         node = TextNode("Text node", TextType.CODE)
-        self.assertEqual(repr(node.text_node_to_html_node()),
-                         "HTMLNode(code, Text node, None, None)")
+        self.assertEqual(
+            node.text_node_to_html_node(), HTMLNode("code", "Text node", None, None)
+        )
 
     def test_html_conversion_link(self):
         """Test text_node_to_html_node(), link"""
         node = TextNode("Text node", TextType.LINK, "google.ca")
-        self.assertEqual(repr(node.text_node_to_html_node()),
-                         "HTMLNode(a, Text node, None, {'href': 'google.ca'})")
+        self.assertEqual(
+            node.text_node_to_html_node(),
+            HTMLNode("a", "Text node", None, {"href": "google.ca"}),
+        )
 
     def test_html_conversion_image(self):
         """Test text_node_to_html_node(), image"""
         node = TextNode("Text node", TextType.IMAGE, "google.ca/test.png")
-        self.assertEqual(repr(node.text_node_to_html_node()),
-                         "HTMLNode(img, , None, {'src': 'google.ca/test.png', 'alt': 'Text node'})")
+        self.assertEqual(
+            node.text_node_to_html_node(),
+            HTMLNode("img", props={"src": "google.ca/test.png", "alt": "Text node"}),
+        )
+
 
 class TestTextFunctions(unittest.TestCase):
     """Tests text node related functions"""
+
+    def test_swap_types_1_2(self):
+        """Test swap_types from 1 to 2"""
+        text_type = swap_types(TextType.BOLD, TextType.BOLD, TextType.NORMAL)
+        self.assertEqual(text_type, TextType.NORMAL)
+
+    def test_swap_types_2_1(self):
+        """Test swap_types from 2 to 1"""
+        text_type = swap_types(TextType.NORMAL, TextType.BOLD, TextType.NORMAL)
+        self.assertEqual(text_type, TextType.BOLD)
+
+    def test_swap_types_error(self):
+        """Test swap_types with bad data"""
+        with self.assertRaises(ValueError) as ve:
+            swap_types(TextType.ITALIC, TextType.BOLD, TextType.NORMAL)
+        self.assertEqual(
+            str(ve.exception), "to_change should be one of type_one or type_two"
+        )
+
     def test_split_nodes_single(self):
         """Test split_nodes_delimiter with one input text"""
         node = TextNode("Simple *bold* text", TextType.NORMAL)
         new_nodes = split_nodes_delimiter([node], "*", TextType.BOLD)
-        output = "[TextNode(Simple , normal, None),"
-        output += " TextNode(bold, bold, None), TextNode( text, normal, None)]"
-        self.assertEqual(repr(new_nodes),
-                         output)
+        self.assertEqual(
+            new_nodes,
+            [
+                TextNode("Simple ", TextType.NORMAL),
+                TextNode("bold", TextType.BOLD),
+                TextNode(" text", TextType.NORMAL),
+            ],
+        )
 
     def test_split_nodes_two_delimiters(self):
         """Test split_nodes_delimiter with one input text, two delimiters"""
         node = TextNode("Simple *bold* text with followup *bold*", TextType.NORMAL)
         new_nodes = split_nodes_delimiter([node], "*", TextType.BOLD)
-        output = "[TextNode(Simple , normal, None), TextNode(bold, bold, None),"
-        output += " TextNode( text with followup , normal, None)"
-        output += ", TextNode(bold, bold, None), TextNode(, normal, None)]"
-        self.assertEqual(repr(new_nodes),
-                         output)
+        self.assertEqual(
+            new_nodes,
+            [
+                TextNode("Simple ", TextType.NORMAL),
+                TextNode("bold", TextType.BOLD),
+                TextNode(" text with followup ", TextType.NORMAL),
+                TextNode("bold", TextType.BOLD),
+            ],
+        )
 
     def test_split_nodes_two_nodes(self):
         """Test split_nodes_delimiter with one input text, two delimiters"""
         node = TextNode("Simple *bold* text with followup *bold*", TextType.NORMAL)
         node2 = TextNode("Testing *bold* text", TextType.NORMAL)
         new_nodes = split_nodes_delimiter([node, node2], "*", TextType.BOLD)
-        output = "[TextNode(Simple , normal, None), TextNode(bold, bold, None),"
-        output += " TextNode( text with followup , normal, None), TextNode(bold, bold, None)"
-        output += ", TextNode(, normal, None), TextNode(Testing , normal, None), "
-        output += "TextNode(bold, bold, None), TextNode( text, normal, None)]"
-        self.assertEqual(repr(new_nodes),
-                         output)
+        self.assertEqual(
+            new_nodes,
+            [
+                TextNode("Simple ", TextType.NORMAL),
+                TextNode("bold", TextType.BOLD),
+                TextNode(" text with followup ", TextType.NORMAL),
+                TextNode("bold", TextType.BOLD),
+                TextNode("Testing ", TextType.NORMAL),
+                TextNode("bold", TextType.BOLD),
+                TextNode(" text", TextType.NORMAL),
+            ],
+        )
 
     def test_split_nodes_non_normal(self):
         """Test split_nodes_delimiter when the text is not NORMAL"""
@@ -128,35 +179,142 @@ class TestTextFunctions(unittest.TestCase):
         """Test extract_markdown_images, single image"""
         self.assertEqual(
             extract_markdown_images("Text ![alt](example.com/test.gif)"),
-            [("alt", "example.com/test.gif")])
+            [("alt", "example.com/test.gif")],
+        )
 
     def test_extract_markdown_images_double(self):
         """Test extract_markdown_images, two images"""
         self.assertEqual(
             extract_markdown_images(
-                "Text ![alt](example.com/test.gif) more ![alt2](t.co/other.png)"),
-                [("alt", "example.com/test.gif"), ("alt2", "t.co/other.png")])
+                "Text ![alt](example.com/test.gif) more ![alt2](t.co/other.png)"
+            ),
+            [("alt", "example.com/test.gif"), ("alt2", "t.co/other.png")],
+        )
 
     def test_extract_markdown_images_no_image(self):
         """Test extract_markdown_images, no images"""
-        self.assertEqual(extract_markdown_images("Text"),[])
+        self.assertEqual(extract_markdown_images("Text"), [])
 
     def test_extract_markdown_links_single(self):
         """Test extract_markdown_links, single link"""
         self.assertEqual(
             extract_markdown_links("Text [link](example.com)"),
-            [("link", "example.com")])
+            [("link", "example.com")],
+        )
 
     def test_extract_markdown_links_double(self):
         """Test extract_markdown_links, two links"""
         self.assertEqual(
             extract_markdown_links(
-                "Text ![link](example.com) more ![link2](google.ca)"),
-                [("link", "example.com"), ("link2", "google.ca")])
+                "Text ![link](example.com) more ![link2](google.ca)"
+            ),
+            [("link", "example.com"), ("link2", "google.ca")],
+        )
 
     def test_extract_markdown_links_no_image(self):
         """Test extract_markdown_links, no links"""
-        self.assertEqual(extract_markdown_links("Text"),[])
+        self.assertEqual(extract_markdown_links("Text"), [])
+
+    def test_split_nodes_image_single(self):
+        """Test split_nodes_image with a single image"""
+        node = TextNode("Pre text ![alt text](example.com/image.png)", TextType.NORMAL)
+        self.assertEqual(
+            split_nodes_image([node]),
+            [
+                TextNode("Pre text ", TextType.NORMAL),
+                TextNode("alt text", TextType.IMAGE, "example.com/image.png"),
+            ],
+        )
+
+    def test_split_nodes_image_double(self):
+        """Test split_nodes_image with two images"""
+        node = TextNode(
+            "Pre text ![alt text](example.com/image.png) mid text "
+            + "![other alt text](example.com/img.jpg) post text",
+            TextType.NORMAL,
+        )
+        self.assertEqual(
+            split_nodes_image([node]),
+            [
+                TextNode("Pre text ", TextType.NORMAL),
+                TextNode("alt text", TextType.IMAGE, "example.com/image.png"),
+                TextNode(" mid text ", TextType.NORMAL),
+                TextNode("other alt text", TextType.IMAGE, "example.com/img.jpg"),
+                TextNode(" post text", TextType.NORMAL),
+            ],
+        )
+
+    def test_split_nodes_image_double_node(self):
+        """Test split_nodes_image with two images, one per node"""
+        node = TextNode(
+            "Pre text ![alt text](example.com/image.png) mid text ",
+            TextType.NORMAL,
+        )
+        node2 = TextNode(
+            "![other alt text](example.com/img.jpg) post text",
+            TextType.NORMAL,
+        )
+        self.assertEqual(
+            split_nodes_image([node, node2]),
+            [
+                TextNode("Pre text ", TextType.NORMAL),
+                TextNode("alt text", TextType.IMAGE, "example.com/image.png"),
+                TextNode(" mid text ", TextType.NORMAL),
+                TextNode("other alt text", TextType.IMAGE, "example.com/img.jpg"),
+                TextNode(" post text", TextType.NORMAL),
+            ],
+        )
+
+    def test_split_nodes_link_single(self):
+        """Test split_nodes_link with a single link"""
+        node = TextNode("Pre text [link text](example.com)", TextType.NORMAL)
+        self.assertEqual(
+            split_nodes_link([node]),
+            [
+                TextNode("Pre text ", TextType.NORMAL),
+                TextNode("link text", TextType.LINK, "example.com"),
+            ],
+        )
+
+    def test_split_nodes_link_double(self):
+        """Test split_nodes_link with two links"""
+        node = TextNode(
+            "Pre text [link text](example.com) mid text "
+            + "[other link text](google.ca) post text",
+            TextType.NORMAL,
+        )
+        self.assertEqual(
+            split_nodes_link([node]),
+            [
+                TextNode("Pre text ", TextType.NORMAL),
+                TextNode("link text", TextType.LINK, "example.com"),
+                TextNode(" mid text ", TextType.NORMAL),
+                TextNode("other link text", TextType.LINK, "google.ca"),
+                TextNode(" post text", TextType.NORMAL),
+            ],
+        )
+
+    def test_split_nodes_link_double_node(self):
+        """Test split_nodes_link with two links, one per node"""
+        node = TextNode(
+            "Pre text [link text](example.com) mid text ",
+            TextType.NORMAL,
+        )
+        node2 = TextNode(
+            "[other link text](google.ca) post text",
+            TextType.NORMAL,
+        )
+        self.assertEqual(
+            split_nodes_link([node, node2]),
+            [
+                TextNode("Pre text ", TextType.NORMAL),
+                TextNode("link text", TextType.LINK, "example.com"),
+                TextNode(" mid text ", TextType.NORMAL),
+                TextNode("other link text", TextType.LINK, "google.ca"),
+                TextNode(" post text", TextType.NORMAL),
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4,8 +4,10 @@ import unittest
 
 from htmlnode import HTMLNode, LeafNode, ParentNode
 
+
 class TestHTMLNode(unittest.TestCase):
     """Test HTML Node"""
+
     def test_html_values(self):
         """Test setting tag, value"""
         node = HTMLNode("t1", "value")
@@ -17,7 +19,9 @@ class TestHTMLNode(unittest.TestCase):
     def test_props_to_html(self):
         """Test props_to_html()"""
         node = HTMLNode(props={"href": "https://www.google.com", "target": "_blank"})
-        self.assertEqual(node.props_to_html(), ' href="https://www.google.com" target="_blank"')
+        self.assertEqual(
+            node.props_to_html(), ' href="https://www.google.com" target="_blank"'
+        )
 
     def test_leaf_no_tag(self):
         """Test leaf node, no tag"""
@@ -60,8 +64,7 @@ class TestHTMLNode(unittest.TestCase):
         self.assertEqual(parent.tag, "p")
         self.assertEqual(parent.children, [child])
         self.assertEqual(parent.props, None)
-        self.assertEqual(parent.to_html(),
-                         "<p><b>test</b></p>")
+        self.assertEqual(parent.to_html(), "<p><b>test</b></p>")
 
     def test_parent_with_tag_and_props(self):
         """Test parent node with tag and props, one child"""
@@ -70,8 +73,7 @@ class TestHTMLNode(unittest.TestCase):
         self.assertEqual(parent.tag, "a")
         self.assertEqual(parent.children, [child])
         self.assertEqual(parent.props, {"href": "google.ca"})
-        self.assertEqual(parent.to_html(),
-                         '<a href="google.ca"><b>test</b></a>')
+        self.assertEqual(parent.to_html(), '<a href="google.ca"><b>test</b></a>')
 
     def test_parent_no_tag(self):
         """Test parent node without a tag"""
@@ -95,8 +97,7 @@ class TestHTMLNode(unittest.TestCase):
         parent = ParentNode("p", [child1, child2])
         self.assertEqual(parent.tag, "p")
         self.assertEqual(len(parent.children), 2)
-        self.assertEqual(parent.to_html(),
-                         "<p>test<b>bold</b></p>")
+        self.assertEqual(parent.to_html(), "<p>test<b>bold</b></p>")
 
     def test_parent_nested(self):
         """Test parent node with nested parent node"""
@@ -104,8 +105,7 @@ class TestHTMLNode(unittest.TestCase):
         middle = ParentNode("p", [leaf])
         top = ParentNode("h1", [middle])
         self.assertEqual(top.tag, "h1")
-        self.assertEqual(top.to_html(),
-                         "<h1><p><b>leaf</b></p></h1>")
+        self.assertEqual(top.to_html(), "<h1><p><b>leaf</b></p></h1>")
 
 
 if __name__ == "__main__":
