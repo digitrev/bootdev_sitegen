@@ -6,6 +6,7 @@ from textnode import (
     TextNode,
     TextType,
     extract_markdown_images,
+    markdown_to_blocks,
     split_nodes_image,
     split_nodes_link,
     extract_markdown_links,
@@ -387,6 +388,48 @@ class TestTextFunctions(unittest.TestCase):
                 TextNode(" and a ", TextType.NORMAL),
                 TextNode("link", TextType.LINK, "https://boot.dev"),
             ],
+        )
+
+    def test_markdown_to_blocks_single(self):
+        """Test markdown_to_blocks() on a single line string"""
+        self.assertEqual(markdown_to_blocks("Simple text"), ["Simple text"])
+
+    def test_markdown_to_blocks_single_one_newline(self):
+        """Test markdown_to_blocks() with one newline"""
+        self.assertEqual(
+            markdown_to_blocks("Simple text\nBreak"), ["Simple text\nBreak"]
+        )
+
+    def test_markdown_to_blocks_single_leading_whitespace(self):
+        """Test markdown_to_blocks() with leading whitespace"""
+        self.assertEqual(
+            markdown_to_blocks("\t \nSimple text"), ["Simple text"]
+        )
+
+    def test_markdown_to_blocks_single_trailing_whitespace(self):
+        """Test markdown_to_blocks() with trailing whitespace"""
+        self.assertEqual(
+            markdown_to_blocks("Simple text\n \t"), ["Simple text"]
+        )
+
+    def test_markdown_to_blocks_multiple(self):
+        """Test markdown_to_blocks() with three blocks"""
+        self.assertEqual(
+            markdown_to_blocks("Block one\n\nBlock two\n\nBlock three"),
+            ["Block one", "Block two", "Block three"],
+        )
+
+    def test_markdown_to_blocks_multiple_extra_newline(self):
+        """Test markdown_to_blocks() with two blocks and an extra newline"""
+        self.assertEqual(
+            markdown_to_blocks("Block one\n\n\nBlock two"),
+            ["Block one", "Block two"],
+        )
+    def test_markdown_to_blocks_multiple_extra_newlines(self):
+        """Test markdown_to_blocks() with four newlines"""
+        self.assertEqual(
+            markdown_to_blocks("Block one\n\n\n\nBlock two"),
+            ["Block one", "Block two"],
         )
 
 
