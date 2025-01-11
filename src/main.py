@@ -8,6 +8,9 @@ from textnode import (
     extract_markdown_images,
     extract_markdown_links,
     markdown_to_blocks,
+    markdown_to_html_node,
+    paragraph_to_html_node,
+    quote_to_html_node,
     split_nodes_delimiter,
     split_nodes_image,
     split_nodes_link,
@@ -18,35 +21,63 @@ from textnode import (
 
 def main():
     """Main function"""
-    markdown = """# H1
+    markdown = """
+# Markdown syntax guide
 
-## H2
+## Headers
 
-### H3
+# This is a Heading h1
+## This is a Heading h2
+###### This is a Heading h6
 
-#### H4
+## Emphasis
 
-##### H5
+*This text will be italic*  
 
-###### H6
+**This text will be bold**  
 
-####### H7
+## Lists
 
-> blockquote
-> blockquote line 2
+### Unordered
 
-1. test
-2. test
+* Item 1
+* Item 2
+* Item 2a
+* Item 2b
 
-* test
-- test
+### Ordered
+
+1. Item 1
+2. Item 2
+3. Item 3
+
+## Images
+
+![This is an alt text.](/image/sample.webp "This is a sample image.")
+
+## Links
+
+You may be using [Markdown Live Preview](https://markdownlivepreview.com/).
+
+## Blockquotes
+
+> Markdown is a lightweight markup language with plain-text-formatting syntax, created in 2004 by John Gruber with Aaron Swartz.
+>
+> Third line
+
+## Blocks of code
 
 ```
-some stuff
+let message = 'Hello world';
+alert(message);
 ```
+
+## Inline code
+
+This web site is using `markedjs/marked`.
 
 """
-    for b in markdown_to_blocks(markdown):
-        print(block_to_block_type(b))
+    print(markdown_to_html_node(markdown))
+
 
 main()

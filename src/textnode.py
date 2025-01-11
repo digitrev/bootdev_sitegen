@@ -3,7 +3,7 @@
 from enum import Enum
 import re
 
-from htmlnode import LeafNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
 
 
 class TextType(Enum):
@@ -47,7 +47,7 @@ class TextNode:
     def __repr__(self):
         return f"TextNode({self.text}, {self.text_type.value}, {self.url})"
 
-    def text_node_to_html_node(self):
+    def to_html_node(self):
         """Convert self to HTML Leaf Node"""
         tag = None
         value = self.text
@@ -128,7 +128,7 @@ def split_nodes_general(
     format_string: str,
     extract_function,
 ):
-    """Split out nodes based"""
+    """Split out nodes based on format string and extract function"""
     new_nodes = []
     for n in old_nodes:
         node_text = n.text
@@ -143,8 +143,7 @@ def split_nodes_general(
 
 def text_to_textnodes(text: str):
     """Convert text to list of TextNodes"""
-    new_nodes = [TextNode(text, TextType.NORMAL)]
-    new_nodes = split_nodes_image(new_nodes)
+    new_nodes = split_nodes_image([TextNode(text, TextType.NORMAL)])
     new_nodes = split_nodes_link(new_nodes)
     new_nodes = split_nodes_delimiter(new_nodes, "**", TextType.BOLD)
     new_nodes = split_nodes_delimiter(new_nodes, "*", TextType.ITALIC)
@@ -195,3 +194,73 @@ def block_to_block_type(block: str):
         return BlockType.ORDERED_LIST
 
     return BlockType.PARAGRAPH
+
+
+def markdown_to_html_node(markdown: str):
+    """Convert markdown to full html node"""
+    children = []
+    for block in markdown_to_blocks(markdown):
+        children.append(
+            block_type_to_helper_function(block_to_block_type(block))(block)
+        )
+
+    return ParentNode("div", children)
+
+
+def block_type_to_helper_function(block_type: BlockType):
+    """Convert block to to appropriate _to_html_node function"""
+    match block_type:
+        case BlockType.PARAGRAPH:
+            return paragraph_to_html_node
+        case BlockType.HEADING:
+            return heading_to_html_node
+        case BlockType.CODE:
+            return code_to_html_node
+        case BlockType.QUOTE:
+            return quote_to_html_node
+        case BlockType.UNORDERED_LIST:
+            return unordered_list_to_html_node
+        case BlockType.ORDERED_LIST:
+            return ordered_list_to_html_node
+
+
+def paragraph_to_html_node(paragraph: str):
+    """Convert paragraph string to HTMLNode"""
+    return ParentNode("p", [tn.to_html_node() for tn in text_to_textnodes(paragraph)])
+
+
+def heading_to_html_node(heading: str):
+    """Convert heading string to HTMLNode"""
+    heading_level = len(heading) - len(heading.lstrip("#"))
+    heading_text = heading.replace(f"{'#'*heading_level} ", "")
+    return LeafNode(f"h{heading_level}", heading_text)
+
+
+def code_to_html_node(code: str):
+    """Convert code string to HTMLNode"""
+    code_text = code.strip("```")
+    return ParentNode("pre", [LeafNode("code", code_text)])
+
+
+def quote_to_html_node(quote: str):
+    """Convert quote string to HTMLNode"""
+    quote_text = "\n".join(l.lstrip(">") for l in quote.splitlines())
+    return ParentNode("blockquote", text_to_textnodes(quote_text))
+
+
+def unordered_list_to_html_node(unordered: str):
+    """Convert unordered list string to HTMLNode"""
+    children = []
+    for line in unordered.splitlines():
+        line_text = line.lstrip("*-").lstrip()
+        children.append(ParentNode("li", text_to_textnodes(line_text)))
+    return ParentNode("ul", children)
+
+
+def ordered_list_to_html_node(ordered: str):
+    """Convert ordered list string to HTMLNode"""
+    children = []
+    for line in ordered.splitlines():
+        line_text = line.lstrip("1234567890.").lstrip()
+        children.append(ParentNode("li", text_to_textnodes(line_text)))
+    return ParentNode("ol", children)

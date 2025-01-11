@@ -1,20 +1,27 @@
 """Test the TextNode class"""
 
 import unittest
-from htmlnode import HTMLNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
 from textnode import (
     BlockType,
     TextNode,
     TextType,
     block_to_block_type,
+    block_type_to_helper_function,
+    code_to_html_node,
     extract_markdown_images,
+    heading_to_html_node,
     markdown_to_blocks,
+    ordered_list_to_html_node,
+    paragraph_to_html_node,
+    quote_to_html_node,
     split_nodes_image,
     split_nodes_link,
     extract_markdown_links,
     split_nodes_delimiter,
     swap_types,
     text_to_textnodes,
+    unordered_list_to_html_node,
 )
 
 
@@ -72,22 +79,18 @@ class TestTextNode(unittest.TestCase):
     def test_html_conversion_normal(self):
         """Test text_node_to_html_node(), no decoration"""
         node = TextNode("Text node", TextType.NORMAL)
-        self.assertEqual(
-            node.text_node_to_html_node(), HTMLNode(None, "Text node", None, None)
-        )
+        self.assertEqual(node.to_html_node(), HTMLNode(None, "Text node", None, None))
 
     def test_html_conversion_tagged(self):
         """Test text_node_to_html_node(), basic tag"""
         node = TextNode("Text node", TextType.CODE)
-        self.assertEqual(
-            node.text_node_to_html_node(), HTMLNode("code", "Text node", None, None)
-        )
+        self.assertEqual(node.to_html_node(), HTMLNode("code", "Text node", None, None))
 
     def test_html_conversion_link(self):
         """Test text_node_to_html_node(), link"""
         node = TextNode("Text node", TextType.LINK, "google.ca")
         self.assertEqual(
-            node.text_node_to_html_node(),
+            node.to_html_node(),
             HTMLNode("a", "Text node", None, {"href": "google.ca"}),
         )
 
@@ -95,7 +98,7 @@ class TestTextNode(unittest.TestCase):
         """Test text_node_to_html_node(), image"""
         node = TextNode("Text node", TextType.IMAGE, "google.ca/test.png")
         self.assertEqual(
-            node.text_node_to_html_node(),
+            node.to_html_node(),
             HTMLNode("img", props={"src": "google.ca/test.png", "alt": "Text node"}),
         )
 
@@ -480,19 +483,116 @@ class TestTextFunctions(unittest.TestCase):
 
     def test_block_to_block_type_mixed_quote(self):
         """Test block_to_block_type() with mixed quote and non-quote"""
-        self.assertEqual(block_to_block_type(">line one\nline two"), BlockType.PARAGRAPH)
+        self.assertEqual(
+            block_to_block_type(">line one\nline two"), BlockType.PARAGRAPH
+        )
 
     def test_block_to_block_type_mixed_ordered(self):
         """Test block_to_block_type() with mixed ordered and non-ordered"""
-        self.assertEqual(block_to_block_type("1. line one\nline two"), BlockType.PARAGRAPH)
+        self.assertEqual(
+            block_to_block_type("1. line one\nline two"), BlockType.PARAGRAPH
+        )
 
     def test_block_to_block_type_incorrect_ordered(self):
         """Test block_to_block_type() with incorrect ordering"""
-        self.assertEqual(block_to_block_type("2. line one\n1. line two"), BlockType.PARAGRAPH)
+        self.assertEqual(
+            block_to_block_type("2. line one\n1. line two"), BlockType.PARAGRAPH
+        )
 
     def test_block_to_block_type_mixed_unordered(self):
         """Test block_to_block_type() with mixed unordered and non-unordered"""
-        self.assertEqual(block_to_block_type("* line one\nline two"), BlockType.PARAGRAPH)
+        self.assertEqual(
+            block_to_block_type("* line one\nline two"), BlockType.PARAGRAPH
+        )
+
+    def test_block_type_to_helper_function_paragraph(self):
+        """Test block_type_to_helper_function for paragraph"""
+        self.assertEqual(
+            block_type_to_helper_function(BlockType.PARAGRAPH), paragraph_to_html_node
+        )
+
+    def test_block_type_to_helper_function_heading(self):
+        """Test block_type_to_helper_function for heading"""
+        self.assertEqual(
+            block_type_to_helper_function(BlockType.HEADING), heading_to_html_node
+        )
+
+    def test_block_type_to_helper_function_code(self):
+        """Test block_type_to_helper_function for code"""
+        self.assertEqual(
+            block_type_to_helper_function(BlockType.CODE), code_to_html_node
+        )
+
+    def test_block_type_to_helper_function_quote(self):
+        """Test block_type_to_helper_function for quote"""
+        self.assertEqual(
+            block_type_to_helper_function(BlockType.QUOTE), quote_to_html_node
+        )
+
+    def test_block_type_to_helper_function_unordered_list(self):
+        """Test block_type_to_helper_function for unordered_list"""
+        self.assertEqual(
+            block_type_to_helper_function(BlockType.UNORDERED_LIST),
+            unordered_list_to_html_node,
+        )
+
+    def test_block_type_to_helper_function_ordered_list(self):
+        """Test block_type_to_helper_function for ordered_list"""
+        self.assertEqual(
+            block_type_to_helper_function(BlockType.ORDERED_LIST),
+            ordered_list_to_html_node,
+        )
+
+    def test_paragraph_to_html_node(self):
+        """Test paragraph_to_html_node()"""
+        html_node = paragraph_to_html_node("Just some *basic* text")
+        self.assertIsInstance(html_node, ParentNode)
+        self.assertEqual(html_node.tag, "p")
+        self.assertGreaterEqual(len(html_node.children), 1)
+
+    def test_heading_to_html_node(self):
+        """Test heading_to_html_node()"""
+        html_node = heading_to_html_node("# h1")
+        self.assertIsInstance(html_node, LeafNode)
+        self.assertEqual(html_node.tag, "h1")
+
+    def test_code_to_html_node(self):
+        """Test code_to_html_node()"""
+        html_node = code_to_html_node("```some code\nblock\nstuff```")
+        self.assertIsInstance(html_node, ParentNode)
+        self.assertEqual(html_node.tag, "pre")
+        self.assertEqual(len(html_node.children), 1)
+        self.assertIsInstance(html_node.children[0], LeafNode)
+        self.assertEqual(html_node.children[0].tag, "code")
+
+    def test_quote_to_html_node(self):
+        """Test quote_to_html_node()"""
+        html_node = quote_to_html_node(">line one>line *decorate* two")
+        self.assertIsInstance(html_node, ParentNode)
+        self.assertEqual(html_node.tag, "blockquote")
+        self.assertGreaterEqual(len(html_node.children), 1)
+
+    def test_unordered_list_to_html_node(self):
+        """Test unordered_list_to_html_node()"""
+        html_node = unordered_list_to_html_node("* line one\n- line two *with dec*")
+        self.assertIsInstance(html_node, ParentNode)
+        self.assertEqual(html_node.tag, "ul")
+        self.assertGreaterEqual(len(html_node.children), 1)
+        for child in html_node.children:
+            self.assertIsInstance(child, ParentNode)
+            self.assertEqual(child.tag, "li")
+            self.assertGreaterEqual(len(child.children), 1)
+
+    def test_ordered_list_to_html_node(self):
+        """Test ordered_list_to_html_node()"""
+        html_node = ordered_list_to_html_node("1. line one\n2. line two *with dec*")
+        self.assertIsInstance(html_node, ParentNode)
+        self.assertEqual(html_node.tag, "ol")
+        self.assertGreaterEqual(len(html_node.children), 1)
+        for child in html_node.children:
+            self.assertIsInstance(child, ParentNode)
+            self.assertEqual(child.tag, "li")
+            self.assertGreaterEqual(len(child.children), 1)
 
 
 if __name__ == "__main__":
