@@ -17,6 +17,17 @@ class TextType(Enum):
     IMAGE = "image"
 
 
+class BlockType(Enum):
+    """Block type enumeration: paragraph, heading, etc..."""
+
+    PARAGRAPH = "paragraph"
+    HEADING = "heading"
+    CODE = "code"
+    QUOTE = "quote"
+    UNORDERED_LIST = "unordered_list"
+    ORDERED_LIST = "ordered_list"
+
+
 class TextNode:
     """Text node, defined by text, a type, and an optional url"""
 
@@ -144,3 +155,43 @@ def text_to_textnodes(text: str):
 def markdown_to_blocks(markdown: str):
     """Convert some markdown to blocks of text"""
     return [line.strip() for line in markdown.split("\n\n") if line.strip() != ""]
+
+
+def block_to_block_type(block: str):
+    """Convert block to BlockType"""
+    # headings start with 1-6 '#'
+    for n in range(6):
+        if block.startswith(f"{'#'*(n+1)} "):
+            return BlockType.HEADING
+
+    # code blocks start and end with '```'
+    if block.startswith("```") and block.endswith("```"):
+        return BlockType.CODE
+
+    # quote blocks start every line with >
+    is_quote_block = True
+    for line in block.splitlines():
+        if not line.startswith(">"):
+            is_quote_block = False
+    if is_quote_block:
+        return BlockType.QUOTE
+
+    # unordered list blocks start every line with '* ' or '- '
+    is_unordered_list = True
+    for line in block.splitlines():
+        if not line.startswith("* ") and not line.startswith("- "):
+            is_unordered_list = False
+    if is_unordered_list:
+        return BlockType.UNORDERED_LIST
+
+    # ordered list blocks start every line with 'n. ', n >= 1
+    is_ordered_list = True
+    line_number = 0
+    for line in block.splitlines():
+        line_number += 1
+        if not line.startswith(f"{line_number}. "):
+            is_ordered_list = False
+    if is_ordered_list:
+        return BlockType.ORDERED_LIST
+
+    return BlockType.PARAGRAPH

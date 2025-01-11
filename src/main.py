@@ -4,6 +4,7 @@ from htmlnode import LeafNode, ParentNode
 from textnode import (
     TextNode,
     TextType,
+    block_to_block_type,
     extract_markdown_images,
     extract_markdown_links,
     markdown_to_blocks,
@@ -17,15 +18,35 @@ from textnode import (
 
 def main():
     """Main function"""
-    markdown = """# This is a heading
+    markdown = """# H1
 
-  This is a paragraph of text. It has some **bold** and *italic* words inside of it.
+## H2
 
-  
-* This is the first list item in a list block  
-* This is a list item  
-* This is another list item"""
+### H3
+
+#### H4
+
+##### H5
+
+###### H6
+
+####### H7
+
+> blockquote
+> blockquote line 2
+
+1. test
+2. test
+
+* test
+- test
+
+```
+some stuff
+```
+
+"""
     for b in markdown_to_blocks(markdown):
-        print(b)
+        print(block_to_block_type(b))
 
 main()

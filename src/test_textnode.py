@@ -3,8 +3,10 @@
 import unittest
 from htmlnode import HTMLNode
 from textnode import (
+    BlockType,
     TextNode,
     TextType,
+    block_to_block_type,
     extract_markdown_images,
     markdown_to_blocks,
     split_nodes_image,
@@ -402,15 +404,11 @@ class TestTextFunctions(unittest.TestCase):
 
     def test_markdown_to_blocks_single_leading_whitespace(self):
         """Test markdown_to_blocks() with leading whitespace"""
-        self.assertEqual(
-            markdown_to_blocks("\t \nSimple text"), ["Simple text"]
-        )
+        self.assertEqual(markdown_to_blocks("\t \nSimple text"), ["Simple text"])
 
     def test_markdown_to_blocks_single_trailing_whitespace(self):
         """Test markdown_to_blocks() with trailing whitespace"""
-        self.assertEqual(
-            markdown_to_blocks("Simple text\n \t"), ["Simple text"]
-        )
+        self.assertEqual(markdown_to_blocks("Simple text\n \t"), ["Simple text"])
 
     def test_markdown_to_blocks_multiple(self):
         """Test markdown_to_blocks() with three blocks"""
@@ -425,12 +423,76 @@ class TestTextFunctions(unittest.TestCase):
             markdown_to_blocks("Block one\n\n\nBlock two"),
             ["Block one", "Block two"],
         )
+
     def test_markdown_to_blocks_multiple_extra_newlines(self):
         """Test markdown_to_blocks() with four newlines"""
         self.assertEqual(
             markdown_to_blocks("Block one\n\n\n\nBlock two"),
             ["Block one", "Block two"],
         )
+
+    def test_block_to_block_type_headings(self):
+        """Test block_to_block_type() with headings"""
+        for n in range(6):
+            self.assertEqual(
+                block_to_block_type(f"{'#'*(n+1)} some text"), BlockType.HEADING
+            )
+
+    def test_block_to_block_type_code(self):
+        """Test block_to_block_type() with code block"""
+        self.assertEqual(block_to_block_type("```some code```"), BlockType.CODE)
+
+    def test_block_to_block_type_quote(self):
+        """Test block_to_block_type() with quote block"""
+        self.assertEqual(block_to_block_type(">line 1\n>line 2"), BlockType.QUOTE)
+
+    def test_block_to_block_type_ordered_list(self):
+        """Test block_to_block_type() with ordered list block"""
+        self.assertEqual(
+            block_to_block_type("1. line 1\n2. line 2"), BlockType.ORDERED_LIST
+        )
+
+    def test_block_to_block_type_unordered_list(self):
+        """Test block_to_block_type() with unordered list block"""
+        self.assertEqual(
+            block_to_block_type("* line 1\n- line 2"), BlockType.UNORDERED_LIST
+        )
+
+    def test_block_to_block_type_paragraph(self):
+        """Test block_to_block_type() with paragraph block"""
+        self.assertEqual(block_to_block_type("just some text"), BlockType.PARAGRAPH)
+
+    def test_block_to_block_type_header_without_space(self):
+        """Test block_to_block_type() with a header without the space"""
+        self.assertEqual(block_to_block_type("###bad header"), BlockType.PARAGRAPH)
+
+    def test_block_to_block_type_header_seven(self):
+        """Test block_to_block_type() with seven leading #"""
+        self.assertEqual(block_to_block_type("####### bad header"), BlockType.PARAGRAPH)
+
+    def test_block_to_block_type_code_no_leading(self):
+        """Test block_to_block_type() with no leading backticks"""
+        self.assertEqual(block_to_block_type("code block```"), BlockType.PARAGRAPH)
+
+    def test_block_to_block_type_code_no_trailing(self):
+        """Test block_to_block_type() with no trailing backticks"""
+        self.assertEqual(block_to_block_type("```code block"), BlockType.PARAGRAPH)
+
+    def test_block_to_block_type_mixed_quote(self):
+        """Test block_to_block_type() with mixed quote and non-quote"""
+        self.assertEqual(block_to_block_type(">line one\nline two"), BlockType.PARAGRAPH)
+
+    def test_block_to_block_type_mixed_ordered(self):
+        """Test block_to_block_type() with mixed ordered and non-ordered"""
+        self.assertEqual(block_to_block_type("1. line one\nline two"), BlockType.PARAGRAPH)
+
+    def test_block_to_block_type_incorrect_ordered(self):
+        """Test block_to_block_type() with incorrect ordering"""
+        self.assertEqual(block_to_block_type("2. line one\n1. line two"), BlockType.PARAGRAPH)
+
+    def test_block_to_block_type_mixed_unordered(self):
+        """Test block_to_block_type() with mixed unordered and non-unordered"""
+        self.assertEqual(block_to_block_type("* line one\nline two"), BlockType.PARAGRAPH)
 
 
 if __name__ == "__main__":
