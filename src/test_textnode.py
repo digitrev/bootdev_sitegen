@@ -11,6 +11,7 @@ from textnode import (
     extract_markdown_links,
     split_nodes_delimiter,
     swap_types,
+    text_to_textnodes,
 )
 
 
@@ -312,6 +313,79 @@ class TestTextFunctions(unittest.TestCase):
                 TextNode(" mid text ", TextType.NORMAL),
                 TextNode("other link text", TextType.LINK, "google.ca"),
                 TextNode(" post text", TextType.NORMAL),
+            ],
+        )
+
+    def test_text_to_textnodes_plain(self):
+        """Test text_to_textnodes, plain text"""
+        self.assertEqual(
+            text_to_textnodes("Plain text"), [TextNode("Plain text", TextType.NORMAL)]
+        )
+
+    def test_text_to_textnodes_bold(self):
+        """Test text_to_textnodes, bold text"""
+        self.assertEqual(
+            text_to_textnodes("**Bold** text"),
+            [TextNode("Bold", TextType.BOLD), TextNode(" text", TextType.NORMAL)],
+        )
+
+    def test_text_to_textnodes_italic(self):
+        """Test text_to_textnodes, italic text"""
+        self.assertEqual(
+            text_to_textnodes("*Italic* text"),
+            [TextNode("Italic", TextType.ITALIC), TextNode(" text", TextType.NORMAL)],
+        )
+
+    def test_text_to_textnodes_code(self):
+        """Test text_to_textnodes, code text"""
+        self.assertEqual(
+            text_to_textnodes("`Code` text"),
+            [TextNode("Code", TextType.CODE), TextNode(" text", TextType.NORMAL)],
+        )
+
+    def test_text_to_textnodes_link(self):
+        """Test text_to_textnodes, link"""
+        self.assertEqual(
+            text_to_textnodes("Link to [google](google.ca) with trail"),
+            [
+                TextNode("Link to ", TextType.NORMAL),
+                TextNode("google", TextType.LINK, "google.ca"),
+                TextNode(" with trail", TextType.NORMAL),
+            ],
+        )
+
+    def test_text_to_textnodes_image(self):
+        """Test text_to_textnodes, image"""
+        self.assertEqual(
+            text_to_textnodes(
+                "Image for ![fake thing](example.com/test.png) with trail"
+            ),
+            [
+                TextNode("Image for ", TextType.NORMAL),
+                TextNode("fake thing", TextType.IMAGE, "example.com/test.png"),
+                TextNode(" with trail", TextType.NORMAL),
+            ],
+        )
+
+    def test_text_to_textnodes_everything(self):
+        """Test text_to_textnodes, all at once"""
+        self.assertEqual(
+            text_to_textnodes(
+                "This is **text** with an *italic* word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+            ),
+            [
+                TextNode("This is ", TextType.NORMAL),
+                TextNode("text", TextType.BOLD),
+                TextNode(" with an ", TextType.NORMAL),
+                TextNode("italic", TextType.ITALIC),
+                TextNode(" word and a ", TextType.NORMAL),
+                TextNode("code block", TextType.CODE),
+                TextNode(" and an ", TextType.NORMAL),
+                TextNode(
+                    "obi wan image", TextType.IMAGE, "https://i.imgur.com/fJRm4Vk.jpeg"
+                ),
+                TextNode(" and a ", TextType.NORMAL),
+                TextNode("link", TextType.LINK, "https://boot.dev"),
             ],
         )
 

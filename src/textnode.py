@@ -27,7 +27,8 @@ class TextNode:
 
     def __eq__(self, other):
         return (
-            self.text == other.text
+            isinstance(other, TextNode)
+            and self.text == other.text
             and self.text_type == other.text_type
             and self.url == other.url
         )
@@ -98,25 +99,43 @@ def extract_markdown_links(text: str):
 
 def split_nodes_image(old_nodes: list[TextNode]):
     """Separate out image nodes"""
-    return split_nodes_general(old_nodes, TextType.IMAGE, "![{}]({})")
+    return split_nodes_general(
+        old_nodes, TextType.IMAGE, "![{}]({})", extract_markdown_images
+    )
 
 
 def split_nodes_link(old_nodes: list[TextNode]):
     """Separate out link nodes"""
-    return split_nodes_general(old_nodes, TextType.LINK, "[{}]({})")
+    return split_nodes_general(
+        old_nodes, TextType.LINK, "[{}]({})", extract_markdown_links
+    )
 
 
 def split_nodes_general(
-    old_nodes: list[TextNode], text_type: TextType, format_string: str
+    old_nodes: list[TextNode],
+    text_type: TextType,
+    format_string: str,
+    extract_function,
 ):
     """Split out nodes based"""
     new_nodes = []
     for n in old_nodes:
         node_text = n.text
-        for l in extract_markdown_links(n.text):
+        for l in extract_function(n.text):
             split = node_text.split(format_string.format(l[0], l[1]))
             new_nodes.append(TextNode(split[0], n.text_type))
             new_nodes.append(TextNode(l[0], text_type, l[1]))
             node_text = split[1]
-        new_nodes.append(TextNode(node_text, n.text_type))
+        new_nodes.append(TextNode(node_text, n.text_type, n.url))
     return [n for n in new_nodes if n.text != ""]
+
+
+def text_to_textnodes(text: str):
+    """Convert text to list of TextNodes"""
+    new_nodes = [TextNode(text, TextType.NORMAL)]
+    new_nodes = split_nodes_image(new_nodes)
+    new_nodes = split_nodes_link(new_nodes)
+    new_nodes = split_nodes_delimiter(new_nodes, "**", TextType.BOLD)
+    new_nodes = split_nodes_delimiter(new_nodes, "*", TextType.ITALIC)
+    new_nodes = split_nodes_delimiter(new_nodes, "`", TextType.CODE)
+    return new_nodes

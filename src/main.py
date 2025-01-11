@@ -10,6 +10,7 @@ from textnode import (
     split_nodes_image,
     split_nodes_link,
     swap_types,
+    text_to_textnodes,
 )
 
 
@@ -23,7 +24,7 @@ def main():
     new_nodes = split_nodes_link(
         [node, TextNode("sentence without URL", TextType.BOLD)]
     )
-    print(new_nodes)
+    # print(new_nodes)
 
     node.text = (
         "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif)"
@@ -32,7 +33,8 @@ def main():
     new_nodes = split_nodes_image(
         [node, TextNode("sentence without image", TextType.BOLD)]
     )
-    print(new_nodes)
+    # print(new_nodes)
+    print("\n".join(str(x) for x in text_to_textnodes("This is **text** with an *italic* word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev) with trailing text")))
 
 
 main()
