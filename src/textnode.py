@@ -66,7 +66,7 @@ class TextNode:
                 props = {"href": self.url}
             case TextType.IMAGE:
                 tag = "img"
-                value = None
+                value = ""
                 props = {"src": self.url, "alt": self.text}
             case _:
                 raise ValueError("Invalid text node")
@@ -233,19 +233,19 @@ def heading_to_html_node(heading: str):
     """Convert heading string to HTMLNode"""
     heading_level = len(heading) - len(heading.lstrip("#"))
     heading_text = heading.replace(f"{'#'*heading_level} ", "")
-    return LeafNode(f"h{heading_level}", heading_text)
+    return ParentNode(f"h{heading_level}", [tn.to_html_node() for tn in text_to_textnodes(heading_text)])
 
 
 def code_to_html_node(code: str):
     """Convert code string to HTMLNode"""
-    code_text = code.strip("```")
+    code_text = code.strip("```").strip()
     return ParentNode("pre", [LeafNode("code", code_text)])
 
 
 def quote_to_html_node(quote: str):
     """Convert quote string to HTMLNode"""
-    quote_text = "\n".join(l.lstrip(">") for l in quote.splitlines())
-    return ParentNode("blockquote", text_to_textnodes(quote_text))
+    quote_text = "\n".join(l.lstrip(">").strip() for l in quote.splitlines())
+    return ParentNode("blockquote", [tn.to_html_node() for tn in text_to_textnodes(quote_text)])
 
 
 def unordered_list_to_html_node(unordered: str):
@@ -253,7 +253,7 @@ def unordered_list_to_html_node(unordered: str):
     children = []
     for line in unordered.splitlines():
         line_text = line.lstrip("*-").lstrip()
-        children.append(ParentNode("li", text_to_textnodes(line_text)))
+        children.append(ParentNode("li", [tn.to_html_node() for tn in text_to_textnodes(line_text)]))
     return ParentNode("ul", children)
 
 
@@ -262,5 +262,5 @@ def ordered_list_to_html_node(ordered: str):
     children = []
     for line in ordered.splitlines():
         line_text = line.lstrip("1234567890.").lstrip()
-        children.append(ParentNode("li", text_to_textnodes(line_text)))
+        children.append(ParentNode("li", [tn.to_html_node() for tn in text_to_textnodes(line_text)]))
     return ParentNode("ol", children)
